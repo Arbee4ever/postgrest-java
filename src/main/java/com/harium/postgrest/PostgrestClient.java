@@ -8,11 +8,11 @@ import java.util.List;
 
 public class PostgrestClient {
 
-    private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+    public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
     protected final String baseUrl;
 
-    private final OkHttpClient client;
+    protected final OkHttpClient client;
 
     protected boolean httpsEnabled = true;
 
