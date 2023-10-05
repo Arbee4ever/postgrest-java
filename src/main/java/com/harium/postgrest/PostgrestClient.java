@@ -18,11 +18,15 @@ public class PostgrestClient {
 
     protected boolean httpsEnabled = true;
 
-    public PostgrestClient(String baseUrl, String schema = "public") {
+    public PostgrestClient(String baseUrl, String schema) {
         this.baseUrl = extractHost(baseUrl);
         this.schema = schema;
 
         client = new OkHttpClient();
+    }
+    
+    public PostgrestClient(String baseUrl) {
+        return new PostgrestClient(baseUrl, "public");
     }
 
     public PostgrestClient withHttps(boolean https) {
