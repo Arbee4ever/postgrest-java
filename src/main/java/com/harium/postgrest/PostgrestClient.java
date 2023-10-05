@@ -26,7 +26,7 @@ public class PostgrestClient {
     }
     
     public PostgrestClient(String baseUrl) {
-        return new PostgrestClient(baseUrl, "public");
+        this(baseUrl, "public");
     }
 
     public PostgrestClient withHttps(boolean https) {
