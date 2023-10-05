@@ -29,6 +29,14 @@ public class PostgrestClient {
         this(baseUrl, "public");
     }
 
+    public void setSchema(String schema) {
+        this.schema = schema;
+    }
+
+    public String getSchema() {
+        return schema;
+    }
+
     public PostgrestClient withHttps(boolean https) {
         this.httpsEnabled = https;
         return this;
