@@ -14,10 +14,13 @@ public class PostgrestClient {
 
     protected final OkHttpClient client;
 
+    protected String schema;
+
     protected boolean httpsEnabled = true;
 
-    public PostgrestClient(String baseUrl) {
+    public PostgrestClient(String baseUrl, String schema = "public") {
         this.baseUrl = extractHost(baseUrl);
+        this.schema = schema;
 
         client = new OkHttpClient();
     }
@@ -142,13 +145,15 @@ public class PostgrestClient {
         HttpUrl httpUrl = buildTableUrl(table);
 
         return new Request.Builder()
-                .url(httpUrl);
+                .url(httpUrl)
+                .addHeader("Accept-Profile", schema);
     }
 
     protected Request.Builder buildRequest(String table, Condition condition) {
         HttpUrl httpUrl = buildTableUrl(table, condition);
 
         return new Request.Builder()
-                .url(httpUrl);
+                .url(httpUrl)
+                .addHeader("Accept-Profile", schema);
     }
 }
