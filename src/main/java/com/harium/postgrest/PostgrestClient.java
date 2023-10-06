@@ -158,7 +158,8 @@ public class PostgrestClient {
 
         return new Request.Builder()
                 .url(httpUrl)
-                .addHeader("Accept-Profile", getSchema());
+                .addHeader("Accept-Profile", getSchema())
+                .addHeader("Content-Profile", getSchema());
     }
 
     protected Request.Builder buildRequest(String table, Condition condition) {
@@ -166,6 +167,7 @@ public class PostgrestClient {
 
         return new Request.Builder()
                 .url(httpUrl)
-                .addHeader("Accept-Profile", getSchema());
+                .addHeader("Accept-Profile", getSchema())
+                .addHeader("Content-Profile", getSchema());
     }
 }
