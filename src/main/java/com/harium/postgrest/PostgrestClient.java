@@ -8,164 +8,172 @@ import java.util.List;
 
 public class PostgrestClient {
 
-    public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+  public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
-    protected final String baseUrl;
+  protected final String baseUrl;
 
-    protected final OkHttpClient client;
+  protected final OkHttpClient client;
 
-    protected String schema;
+  protected String schema;
 
-    protected boolean httpsEnabled = true;
+  protected boolean httpsEnabled = true;
 
-    public PostgrestClient(String baseUrl, String schema) {
-        this.baseUrl = extractHost(baseUrl);
-        this.schema = schema;
+  public PostgrestClient(String baseUrl, String schema) {
+    this.baseUrl = extractHost(baseUrl);
+    this.schema = schema;
 
-        client = new OkHttpClient();
+    client = new OkHttpClient();
+  }
+
+  public PostgrestClient(String baseUrl) {
+    this(baseUrl, "public");
+  }
+
+  public void setSchema(String schema) {
+    this.schema = schema;
+  }
+
+  public String getSchema() {
+    return schema;
+  }
+
+  public PostgrestClient withHttps(boolean https) {
+    this.httpsEnabled = https;
+    return this;
+  }
+
+  private String extractHost(String baseUrl) {
+    final String protocolToken = "://";
+
+    if (baseUrl.startsWith("http")) {
+      return baseUrl.substring(baseUrl.indexOf(protocolToken) + protocolToken.length());
     }
-    
-    public PostgrestClient(String baseUrl) {
-        this(baseUrl, "public");
+    return baseUrl;
+  }
+
+  public String findAll(String table) throws IOException {
+    Request request = buildRequest(table)
+            .addHeader("Accept-Profile", getSchema())
+            .addHeader("Content-Profile", getSchema())
+            .build();
+
+    try (Response response = client.newCall(request).execute()) {
+      return response.body().string();
     }
+  }
 
-    public void setSchema(String schema) {
-        this.schema = schema;
+  public String find(String table, Condition condition) throws IOException {
+    Request request = buildRequest(table, condition)
+            .addHeader("Accept-Profile", getSchema())
+            .addHeader("Content-Profile", getSchema())
+            .build();
+
+    try (Response response = client.newCall(request).execute()) {
+      return response.body().string();
     }
+  }
 
-    public String getSchema() {
-        return schema;
-    }
+  public String insert(String table, String json) throws IOException {
+    return upsert(table, json, false);
+  }
 
-    public PostgrestClient withHttps(boolean https) {
-        this.httpsEnabled = https;
-        return this;
-    }
+  public String insert(String table, Pair... pairs) throws IOException {
+    return insert(table, Insert.row(pairs));
+  }
 
-    private String extractHost(String baseUrl) {
-        final String protocolToken = "://";
+  public String insert(String table, Insert.Row row) throws IOException {
+    String json = JsonHelper.buildJsonFromRow(row);
+    return upsert(table, json, false);
+  }
 
-        if (baseUrl.startsWith("http")) {
-            return baseUrl.substring(baseUrl.indexOf(protocolToken) + protocolToken.length());
-        }
-        return baseUrl;
-    }
+  public String insert(String table, List<Insert.Row> rows) throws IOException {
+    String json = JsonHelper.buildJsonFromRow(rows);
+    return upsert(table, json, false);
+  }
 
-    public String findAll(String table) throws IOException {
-        Request request = buildRequest(table)
-                .addHeader("Accept-Profile", getSchema())
-                .addHeader("Content-Profile", getSchema())
-                .build();
+  public String save(String table, String json) throws IOException {
+    return upsert(table, json, true);
+  }
 
-        try (Response response = client.newCall(request).execute()) {
-            return response.body().string() + request.headers();
-        }
-    }
+  public String save(String table, Pair... pairs) throws IOException {
+    return save(table, Insert.row(pairs));
+  }
 
-    public String find(String table, Condition condition) throws IOException {
-        Request request = buildRequest(table, condition)
-                .build();
+  public String save(String table, Insert.Row row) throws IOException {
+    String json = JsonHelper.buildJsonFromRow(row);
+    return upsert(table, json, true);
+  }
 
-        try (Response response = client.newCall(request).execute()) {
-            return response.body().string();
-        }
-    }
+  public String save(String table, List<Insert.Row> rows) throws IOException {
+    String json = JsonHelper.buildJsonFromRow(rows);
+    return upsert(table, json, true);
+  }
 
-    public String insert(String table, String json) throws IOException {
-        return upsert(table, json, false);
-    }
+  private String upsert(String table, String json, boolean upsert) throws IOException {
+    RequestBody body = RequestBody.create(json, MEDIA_TYPE_JSON);
+    Request.Builder requestBuilder = buildRequest(table)
+            .addHeader("Accept-Profile", getSchema())
+            .addHeader("Content-Profile", getSchema());
 
-    public String insert(String table, Pair... pairs) throws IOException {
-        return insert(table, Insert.row(pairs));
-    }
-
-    public String insert(String table, Insert.Row row) throws IOException {
-        String json = JsonHelper.buildJsonFromRow(row);
-        return upsert(table, json, false);
-    }
-
-    public String insert(String table, List<Insert.Row> rows) throws IOException {
-        String json = JsonHelper.buildJsonFromRow(rows);
-        return upsert(table, json, false);
-    }
-
-    public String save(String table, String json) throws IOException {
-        return upsert(table, json, true);
-    }
-
-    public String save(String table, Pair... pairs) throws IOException {
-        return save(table, Insert.row(pairs));
-    }
-
-    public String save(String table, Insert.Row row) throws IOException {
-        String json = JsonHelper.buildJsonFromRow(row);
-        return upsert(table, json, true);
-    }
-
-    public String save(String table, List<Insert.Row> rows) throws IOException {
-        String json = JsonHelper.buildJsonFromRow(rows);
-        return upsert(table, json, true);
-    }
-
-    private String upsert(String table, String json, boolean upsert) throws IOException {
-        RequestBody body = RequestBody.create(json, MEDIA_TYPE_JSON);
-        Request.Builder requestBuilder = buildRequest(table);
-
-        if (upsert) {
-            requestBuilder.addHeader("Prefer", "resolution=merge-duplicates");
-        }
-
-        Request request = requestBuilder.post(body).build();
-
-        try (Response response = client.newCall(request).execute()) {
-            return response.body().string();
-        }
+    if (upsert) {
+      requestBuilder.addHeader("Prefer", "resolution=merge-duplicates");
     }
 
-    public String delete(String table, Condition condition) throws IOException {
-        Request request = buildRequest(table, condition).delete().build();
+    Request request = requestBuilder.post(body).build();
 
-        try (Response response = client.newCall(request).execute()) {
-            return response.body().string();
-        }
+    try (Response response = client.newCall(request).execute()) {
+      return response.body().string();
+    }
+  }
+
+  public String delete(String table, Condition condition) throws IOException {
+    Request request = buildRequest(table, condition)
+            .addHeader("Accept-Profile", getSchema())
+            .addHeader("Content-Profile", getSchema())
+            .delete()
+            .build();
+
+    try (Response response = client.newCall(request).execute()) {
+      return response.body().string();
+    }
+  }
+
+  protected HttpUrl buildTableUrl(String table) {
+    HttpUrl.Builder builder = new HttpUrl.Builder()
+            .host(baseUrl)
+            .addPathSegment(table);
+
+    if (httpsEnabled) {
+      builder.scheme("https");
     }
 
-    protected HttpUrl buildTableUrl(String table) {
-        HttpUrl.Builder builder = new HttpUrl.Builder()
-                .host(baseUrl)
-                .addPathSegment(table);
+    return builder.build();
+  }
 
-        if (httpsEnabled) {
-            builder.scheme("https");
-        }
+  protected HttpUrl buildTableUrl(String table, Condition condition) {
+    HttpUrl.Builder builder = new HttpUrl.Builder()
+            .host(baseUrl)
+            .addPathSegment(table)
+            .addQueryParameter(condition.getQueryParam(), condition.getQueryValue());
 
-        return builder.build();
+    if (httpsEnabled) {
+      builder.scheme("https");
     }
 
-    protected HttpUrl buildTableUrl(String table, Condition condition) {
-        HttpUrl.Builder builder = new HttpUrl.Builder()
-                .host(baseUrl)
-                .addPathSegment(table)
-                .addQueryParameter(condition.getQueryParam(), condition.getQueryValue());
+    return builder.build();
+  }
 
-        if (httpsEnabled) {
-            builder.scheme("https");
-        }
+  protected Request.Builder buildRequest(String table) {
+    HttpUrl httpUrl = buildTableUrl(table);
 
-        return builder.build();
-    }
+    return new Request.Builder()
+            .url(httpUrl);
+  }
 
-    protected Request.Builder buildRequest(String table) {
-        HttpUrl httpUrl = buildTableUrl(table);
+  protected Request.Builder buildRequest(String table, Condition condition) {
+    HttpUrl httpUrl = buildTableUrl(table, condition);
 
-        return new Request.Builder()
-                .url(httpUrl);
-    }
-
-    protected Request.Builder buildRequest(String table, Condition condition) {
-        HttpUrl httpUrl = buildTableUrl(table, condition);
-
-        return new Request.Builder()
-                .url(httpUrl);
-    }
+    return new Request.Builder()
+            .url(httpUrl);
+  }
 }
