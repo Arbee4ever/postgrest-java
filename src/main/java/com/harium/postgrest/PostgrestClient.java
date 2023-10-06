@@ -53,6 +53,8 @@ public class PostgrestClient {
 
     public String findAll(String table) throws IOException {
         Request request = buildRequest(table)
+                .addHeader("Accept-Profile", getSchema())
+                .addHeader("Content-Profile", getSchema())
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -157,17 +159,13 @@ public class PostgrestClient {
         HttpUrl httpUrl = buildTableUrl(table);
 
         return new Request.Builder()
-                .url(httpUrl)
-                .addHeader("Accept-Profile", getSchema())
-                .addHeader("Content-Profile", getSchema());
+                .url(httpUrl);
     }
 
     protected Request.Builder buildRequest(String table, Condition condition) {
         HttpUrl httpUrl = buildTableUrl(table, condition);
 
         return new Request.Builder()
-                .url(httpUrl)
-                .addHeader("Accept-Profile", getSchema())
-                .addHeader("Content-Profile", getSchema());
+                .url(httpUrl);
     }
 }
