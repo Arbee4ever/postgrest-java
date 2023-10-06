@@ -56,7 +56,7 @@ public class PostgrestClient {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            return response.body().string();
+            return response.body().string() + request.headers();
         }
     }
 
