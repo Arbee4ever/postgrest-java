@@ -32,51 +32,13 @@ public class Condition {
     protected final String operator;
     protected String value;
 
-    Condition(String column, String operator, boolean value) {
+    <T> Condition(String column, String operator, T value) {
         this.column = column;
         this.operator = operator;
         this.value = String.valueOf(value);
     }
 
-    Condition(String column, String operator, int value) {
-        this.column = column;
-        this.operator = operator;
-        this.value = String.valueOf(value);
-    }
-
-    Condition(String column, String operator, double value) {
-        this.column = column;
-        this.operator = operator;
-        this.value = String.valueOf(value);
-    }
-
-    Condition(String column, String operator, String value) {
-        this.column = column;
-        this.operator = operator;
-        this.value = escapeValue(value);
-    }
-
-    protected String escapeValue(String value) {
-        if (value == null) {
-            return "";
-        }
-
-        return "\"" + value + "\"".replaceAll(" ", "%20");
-    }
-
-    public static Condition eq(String column, boolean value) {
-        return new Condition(column, OPERATOR_EQUALS, value);
-    }
-
-    public static Condition eq(String column, double value) {
-        return new Condition(column, OPERATOR_EQUALS, value);
-    }
-
-    public static Condition eq(String column, int value) {
-        return new Condition(column, OPERATOR_EQUALS, value);
-    }
-
-    public static Condition eq(String column, String value) {
+    public static <T> Condition eq(String column, T value) {
         return new Condition(column, OPERATOR_EQUALS, value);
     }
 
